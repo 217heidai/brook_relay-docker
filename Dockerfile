@@ -1,8 +1,7 @@
-FROM alpine:3.11.7
+FROM alpine:latest
 LABEL maintainer="217heidai"
 LABEL name="brook_relay"
 ENV TZ=Asia/Shanghai
-ENV VERSION=v20210101
 ENV server_ip=""
 ENV server_port=""
 ENV listen_port=""

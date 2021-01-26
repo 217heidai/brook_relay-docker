@@ -16,8 +16,3 @@ docker container run -d \
 # How to Upgrade
 1. stop and remove your existing brook_relay container.
 2. setup a new brook_relay container.
-
-## ChangeLog
-| Date      | Content                                                              |
-|-----------|----------------------------------------------------------------------|
-| 2020.12.24 | brook_relay v20210101 |

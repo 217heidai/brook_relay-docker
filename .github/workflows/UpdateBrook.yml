@@ -1,0 +1,79 @@
+name: Update Brook
+
+on: 
+  push:
+    branches: [ master ]
+  schedule:
+  - cron: 0 23 * * *
+  workflow_dispatch:
+    inputs:
+      days:
+        description: 'Number of days.'
+        required: true
+        default: 60
+      minimum_runs:
+        description: 'The minimum runs to keep for each workflow.'
+        required: true
+        default: 6
+
+env:
+  BROOK: brook_linux_amd64
+  REPOSITORY: brook
+  OWNER: txthinking
+  TZ: Asia/Shanghai
+
+jobs:
+  Update_Brook:
+    name: Update Brook
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@main
+
+      - name: Download Brook
+        run: |
+          sudo timedatectl set-timezone "$TZ"
+          rm -rf ${{env.BROOK}}
+          VERSION=$(curl -s "https://api.github.com/repos/${{env.OWNER}}/${{env.REPOSITORY}}/releases/latest" | awk -F '"' '/tag_name/{print $4}')
+          echo "VERSION=$VERSION"  >> $GITHUB_ENV
+          wget https://github.com/${{env.OWNER}}/${{env.REPOSITORY}}/releases/download/$VERSION/${{env.BROOK}}
+
+      - name: Commit Changes
+        id: commit
+        run: |
+          if [ -z "$(git status --porcelain)" ]; then 
+              exit 0
+          else
+            echo "::set-output name=status::success"
+            git add .
+            git config --local user.email "217heidai@gmail.com"
+            git config --local user.name "217heidai"
+            git commit -m "Updated at $(date)" -a
+          fi
+            
+      - name: GitHub Push
+        if: steps.commit.outputs.status == 'success' && !cancelled()
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: ${{ github.ref }}
+      
+      - name: Creat Release
+        if: steps.commit.outputs.status == 'success' && !cancelled()
+        uses: softprops/action-gh-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{env.VERSION}}
+
+      - name: Delete Workflow Runs
+        uses: GitRML/delete-workflow-runs@main
+        with:
+            repository: ${{ github.repository }}
+            retain_days: ${{ github.event.inputs.days }}
+            keep_minimum_runs: ${{ github.event.inputs.minimum_runs }}
+
+      - name: WeChat Notification
+        if: steps.commit.outputs.status == 'success' && !cancelled()
+        run: curl https://sc.ftqq.com/${{ secrets.SERVERCHAN }}.send?text=brook_relay更新完成
