@@ -39,7 +39,7 @@ jobs:
             git add .
             git config --local user.email "217heidai@gmail.com"
             git config --local user.name "217heidai"
-            git commit -m "Brook: ${{env.VERSION}" -a
+            git commit -m "Brook: ${{env.VERSION}}" -a
           fi
             
       - name: GitHub Push
