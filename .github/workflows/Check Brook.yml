@@ -1,0 +1,49 @@
+name: Check Brook
+
+on:
+  push:
+    branches: [ master ]
+  workflow_dispatch:
+  schedule:
+    - cron: 0 23 * * *
+
+env:
+  REPOSITORY: brook
+  OWNER: txthinking
+
+jobs:
+  Check_Brook:
+    name: Check Brook
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Get Release Tag
+      id: getReleaseTag
+      run: |
+        VERSION=$(curl -s "https://api.github.com/repos/${{env.OWNER}}/${{env.REPOSITORY}}/releases/latest" | awk -F '"' '/tag_name/{print $4}')
+        echo "::set-output name=releaseTag::$VERSION"
+
+    - name: Compare Release Tag
+      id: compareReleaseTag
+      uses: actions/cache@v2
+      with:
+        path: .releaseTag
+        key: releaseTag-${{ steps.getReleaseTag.outputs.releaseTag }}
+
+    - name: Save New Release Tag
+      if: steps.compareReleaseTag.outputs.cache-hit != 'true'
+      run: |
+        echo ${{ steps.getReleaseTag.outputs.releaseTag }} | tee .releaseTag
+  
+    - name: Create a Repository Dispatch Event
+      if: steps.compareReleaseTag.outputs.cache-hit != 'true'
+      uses: peter-evans/repository-dispatch@v1
+      with:
+        token: ${{ secrets.MY_TOKEN }}
+        event-type: on-update
+
+    - name: Delete Workflow Runs
+      uses: GitRML/delete-workflow-runs@main
+      with:
+        retain_days: 30
+        keep_minimum_runs: 10
