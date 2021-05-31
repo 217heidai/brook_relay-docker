@@ -60,7 +60,8 @@ jobs:
         run: curl https://sc.ftqq.com/${{ secrets.SERVERCHAN }}.send?text=brook_relay更新完成
 
       - name: Delete Workflow Runs
-        uses: GitRML/delete-workflow-runs@main
+        uses: Mattraks/delete-workflow-runs@main
         with:
-          retain_days: 30
-          keep_minimum_runs: 10
+          token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          retain_days: 7
